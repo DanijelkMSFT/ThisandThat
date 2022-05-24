@@ -32,7 +32,7 @@
   PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com"
 
   .EXAMPLE
-  PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com" -SharedMailbox "SharedMailbox@contoso.com
+  PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com" -SharedMailbox "SharedMailbox@contoso.com"
 
   .EXAMPLE
   PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com" -Verbose
@@ -160,9 +160,9 @@ if ( !(Get-Module msal.ps -ListAvailable) ) { Write-Host "MSAL.PS module not ins
 
 # use function with given parameters
 if ( $SharedMailbox ) { 
-    Test-IMAPXOAUth2Connectivity -tenantID $tenantID -clientId $clientId -redirectUri $redirectUri -LoginHint $LoginHint -SharedMailbox $SharedMailbox
+    Test-IMAPXOAuth2Connectivity -tenantID $tenantID -clientId $clientId -redirectUri $redirectUri -LoginHint $LoginHint -SharedMailbox $SharedMailbox
     } 
     else { 
-    Test-IMAPXOAUth2Connectivity -tenantID $tenantID -clientId $clientId -redirectUri $redirectUri -LoginHint $LoginHint 
+    Test-IMAPXOAuth2Connectivity -tenantID $tenantID -clientId $clientId -redirectUri $redirectUri -LoginHint $LoginHint 
     }
 
