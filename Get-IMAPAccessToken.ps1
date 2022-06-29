@@ -3,6 +3,7 @@
   .SYNOPSIS
   Allows IMAP OAuth testing with Office 365.
   Please install MSAL.PS Powershell module as prerequisite. 
+  https://github.com/DanijelkMSFT/ThisandThat/blob/main/Get-IMAPAccessToken.ps1
 
   .DESCRIPTION
   The function helps admins to test their IMAP OAuth Azure Application, 
@@ -116,7 +117,10 @@ $Port = '993'
     $command = "A01 AUTHENTICATE XOAUTH2 {0}" -f $POPIMAPLogin
     Write-Verbose "Executing command -- $command"
     $SSLstreamWriter.WriteLine($command) 
-    $ResponseStr = $SSLstreamReader.ReadLine()
+    #respose might take longer sometimes
+    while (!$ResponseStr ) { 
+        try { $ResponseStr = $SSLstreamReader.ReadLine() } catch { }
+    }
 
     if ( $ResponseStr -like "*OK AUTHENTICATE completed.") 
     {
@@ -130,7 +134,10 @@ $Port = '993'
         $str = $null
         while (!$done ) {
             $str = $SSLstreamReader.ReadLine()
-            if ($str -like "* OK LIST completed.") { $str ; $done=$true } else { $str }
+            if ($str -like "* OK LIST completed.") { $str } 
+            elseif ($str -like "* BAD User is authenticated but not connected.") { $str; "Causing Error: IMAP access to mailbox is disabled. Please enable IMAP access and wait ~30min until the change is replicated."} 
+            else { $str }
+            $done = $true
         }
         
         Write-Host "Logout and cleanup sessions." -ForegroundColor DarkGreen
@@ -156,7 +163,7 @@ $Port = '993'
 }
 
 #check for needed msal.ps module
-if ( !(Get-Module msal.ps -ListAvailable) ) { Write-Host "MSAL.PS module not installed, please check it out here https://www.powershellgallery.com/packages/MSAL.PS/4.37.0.0" -ForegroundColor Red; break}
+if ( !(Get-Module msal.ps -ListAvailable) ) { Write-Host "MSAL.PS module not installed, please check it out here https://www.powershellgallery.com/packages/MSAL.PS/" -ForegroundColor Red; break}
 
 # use function with given parameters
 if ( $SharedMailbox ) { 
