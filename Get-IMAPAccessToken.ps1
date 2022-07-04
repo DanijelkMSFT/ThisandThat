@@ -4,7 +4,8 @@
   Allows IMAP OAuth testing with Office 365.
   Please install MSAL.PS Powershell module as prerequisite. 
   https://github.com/DanijelkMSFT/ThisandThat/blob/main/Get-IMAPAccessToken.ps1
-  Refercing article with more insides https://www.linkedin.com/pulse/start-using-oauth-office-365-popimap-authentication-danijel-klaric
+  Refercing article with more insides 
+  https://www.linkedin.com/pulse/start-using-oauth-office-365-popimap-authentication-danijel-klaric
 
   .DESCRIPTION
   The function helps admins to test their IMAP OAuth Azure Application, 
