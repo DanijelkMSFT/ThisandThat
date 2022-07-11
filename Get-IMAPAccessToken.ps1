@@ -25,14 +25,20 @@
   .PARAMETER clientId
   Specifies the ClientID/ApplicationID of the registered Azure AD Application with needed IMAP Graph permissions
 
+  .PARAMETER clientsecret
+  Specifies the ClientSecret of the registered Azure AD Application for client credential flow
+
+  .PARAMETER targeMailbox
+  Specifies the primary emailaddress of the targetmailbox which should be accessed by service principal which has fullaccess to for client credential flow
+
   .PARAMETER redirectUri
-  Specifies the redirectUri of the registered Azure AD Application 
+  Specifies the redirectUri of the registered Azure AD Application for authorization code flow (interactive flow)
 
   .PARAMETER LoginHint
-  Specifies the Userprincipalname of the logging in user
+  Specifies the Userprincipalname of the logging in user for authorization code flow (interactive flow)
 
-  .PARAMETER $SharedMailbox (optinal)
-  Specifies the primary emailaddress of the Sharedmailbox logged in user has fullaccess to
+  .PARAMETER SharedMailbox (optinal)
+  Specifies the primary emailaddress of the Sharedmailbox logged in user has fullaccess to for authorization code flow (interactive flow)
 
   .EXAMPLE
   PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com"
