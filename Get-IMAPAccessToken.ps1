@@ -11,11 +11,12 @@
 
   .DESCRIPTION
   The function helps admins to test their IMAP OAuth Azure Application, 
-  with Interactive User login und providing the right formatting for the XOAuth2 login string.
+  with Interactive user login und providing or the lately released client credential flow
+  using the right formatting for the XOAuth2 login string.
   After successful logon, a simple IMAP folder listing is done, in addition it also allows to 
   test shared mailbox acccess for users if fullaccess has been provided. 
   
-  Using Windows Powershell allow MSAL to cache the access+refresh token on disk for further executions.
+  Using Windows Powershell allows MSAL to cache the access+refresh token on disk for further executions for interactive login scenario.
   It´s a simple proof of concept with no further error managment.
 
   .PARAMETER tenantID
