@@ -6,6 +6,8 @@
   https://github.com/DanijelkMSFT/ThisandThat/blob/main/Get-IMAPAccessToken.ps1
   Refercing article with more insides 
   https://www.linkedin.com/pulse/start-using-oauth-office-365-popimap-authentication-danijel-klaric
+  https://techcommunity.microsoft.com/t5/exchange-team-blog/announcing-oauth-2-0-client-credentials-flow-support-for-pop-and/ba-p/3562963
+
 
   .DESCRIPTION
   The function helps admins to test their IMAP OAuth Azure Application, 
@@ -40,35 +42,65 @@
   .EXAMPLE
   PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com" -Verbose
 
+  .EXAMPLE
+  .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientsecret '' -targetMailbox "TargetMailbox@contoso.com"
+
+  .EXAMPLE
+  .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientsecret '' -targetMailbox "TargetMailbox@contoso.com" -Verbose
+
 #>
 
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)][string]$tenantID,
     [Parameter(Mandatory = $true)][String]$clientId,
-    [Parameter(Mandatory = $true)][String]$redirectUri,
-    [Parameter(Mandatory = $true)][String]$LoginHint,
-    [Parameter(Mandatory = $false)][String]$SharedMailbox
+    
+    [Parameter(Mandatory = $true,ParameterSetName="authorizationcode")][String]$redirectUri,
+    [Parameter(Mandatory = $true,ParameterSetName="authorizationcode")][String]$LoginHint,
+    [Parameter(Mandatory = $false,ParameterSetName="authorizationcode")][String]$SharedMailbox,
+
+    [Parameter(Mandatory = $true,ParameterSetName="clientcredentials")][String]$clientsecret,    
+    [Parameter(Mandatory = $true,ParameterSetName="clientcredentials")][String]$targetMailbox
 )
 
 function Test-IMAPXOAuth2Connectivity {
 # get Accesstoken via user authentication and store Access+Refreshtoken for next attempts
-$MsftPowerShellClient = New-MsalClientApplication -ClientId $clientID -TenantId $tenantID -RedirectUri $redirectURI  | Enable-MsalTokenCacheOnDisk -PassThru
-try {
-    $authResult = $MsftPowerShellClient | Get-MsalToken -LoginHint $LoginHint -Scopes 'https://outlook.office365.com/.default'
- }
- catch  {
-     Write-Host "Ran into an exception while getting accesstoken" -ForegroundColor Red
-     $_.Exception.Message
-     $_.FullyQualifiedErrorId
-     break
- }
+if ( $redirectUri ){
+    $MsftPowerShellClient = New-MsalClientApplication -ClientId $clientID -TenantId $tenantID -RedirectUri $redirectURI  | Enable-MsalTokenCacheOnDisk -PassThru
+    try {
+        $authResult = $MsftPowerShellClient | Get-MsalToken -LoginHint $LoginHint -Scopes 'https://outlook.office365.com/.default'
+    }
+    catch  {
+        Write-Host "Ran into an exception while getting accesstoken" -ForegroundColor Red
+        $_.Exception.Message
+        $_.FullyQualifiedErrorId
+        break
+    }
+}
+
+if ( $clientsecret ){
+    $SecuredclientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
+    $MsftPowerShellClient = New-MsalClientApplication -ClientId $clientID -TenantId $tenantID -ClientSecret $SecuredclientSecret 
+    try {
+        $authResult = $MsftPowerShellClient | Get-MsalToken -Scopes 'https://outlook.office365.com/.default'
+    }
+    catch  {
+        Write-Host "Ran into an exception while getting accesstoken" -ForegroundColor Red
+        $_.Exception.Message
+        $_.FullyQualifiedErrorId
+        break
+    }
+}
+
 
 $accessToken = $authResult.AccessToken
 $username = $authResult.Account.Username
 
 # build authentication string with accesstoken and username like documented here
 # https://docs.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth#authenticate-connection-requests
+
+# in the case if client credential usage we need to add the target mailbox like shared mailbox access
+if ( $targetMailbox) { $SharedMailbox = $targetMailbox }
 
 if ( $SharedMailbox ) {
     $b="user=" + $SharedMailbox + "$([char]0x01)auth=Bearer " + $accessToken + "$([char]0x01)$([char]0x01)"
@@ -136,12 +168,11 @@ $Port = '993'
         $str = $null
         while (!$done ) {
             $str = $SSLstreamReader.ReadLine()
-            if ($str -like "* OK LIST completed.") { $str } 
-            elseif ($str -like "* BAD User is authenticated but not connected.") { $str; "Causing Error: IMAP access to mailbox is disabled. Please enable IMAP access and wait ~30min until the change is replicated."} 
+            if ($str -like "* OK LIST completed.") { $str ; $done = $true } 
+            elseif ($str -like "* BAD User is authenticated but not connected.") { $str; "Causing Error: IMAP protcol access to mailbox is disabled or permission not granted for client credential flow. Please enable IMAP protcol access or grant fullaccess to service principal."; $done = $true} 
             else { $str }
-            $done = $true
         }
-        
+
         Write-Host "Logout and cleanup sessions." -ForegroundColor DarkGreen
         $command = 'A01 Logout'
         Write-Verbose "Executing command -- $command"
@@ -167,11 +198,6 @@ $Port = '993'
 #check for needed msal.ps module
 if ( !(Get-Module msal.ps -ListAvailable) ) { Write-Host "MSAL.PS module not installed, please check it out here https://www.powershellgallery.com/packages/MSAL.PS/" -ForegroundColor Red; break}
 
-# use function with given parameters
-if ( $SharedMailbox ) { 
-    Test-IMAPXOAuth2Connectivity -tenantID $tenantID -clientId $clientId -redirectUri $redirectUri -LoginHint $LoginHint -SharedMailbox $SharedMailbox
-    } 
-    else { 
-    Test-IMAPXOAuth2Connectivity -tenantID $tenantID -clientId $clientId -redirectUri $redirectUri -LoginHint $LoginHint 
-    }
+# execute function
+Test-IMAPXOAuth2Connectivity
 
