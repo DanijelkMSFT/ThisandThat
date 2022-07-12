@@ -26,7 +26,10 @@
   Specifies the ClientID/ApplicationID of the registered Azure AD Application with needed IMAP Graph permissions
 
   .PARAMETER clientsecret
-  Specifies the ClientSecret of the registered Azure AD Application for client credential flow
+  Specifies the ClientSecret configured in the Azure AD Application for client credential flow
+
+  .PARAMETER clientcertificate
+  Specifies the ClientCertificate Thumbprint configured in the Azure AD Application for client credential flow
 
   .PARAMETER targeMailbox
   Specifies the primary emailaddress of the targetmailbox which should be accessed by service principal which has fullaccess to for client credential flow
@@ -50,10 +53,13 @@
   PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -redirectUri "https://localhost" -LoginHint "user@contoso.com" -Verbose
 
   .EXAMPLE
-  .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientsecret '' -targetMailbox "TargetMailbox@contoso.com"
+  PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientsecret '' -targetMailbox "TargetMailbox@contoso.com"
 
   .EXAMPLE
-  .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientsecret '' -targetMailbox "TargetMailbox@contoso.com" -Verbose
+  PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientcertificate '' -targetMailbox "TargetMailbox@contoso.com" 
+
+  .EXAMPLE
+  PS> .\Get-IMAPAccessToken.ps1 -tenantID "" -clientId "" -clientsecret '' -targetMailbox "TargetMailbox@contoso.com" -Verbose
 
 #>
 
@@ -66,8 +72,12 @@ param (
     [Parameter(Mandatory = $true,ParameterSetName="authorizationcode")][String]$LoginHint,
     [Parameter(Mandatory = $false,ParameterSetName="authorizationcode")][String]$SharedMailbox,
 
-    [Parameter(Mandatory = $true,ParameterSetName="clientcredentials")][String]$clientsecret,    
-    [Parameter(Mandatory = $true,ParameterSetName="clientcredentials")][String]$targetMailbox
+    [Parameter(Mandatory = $true,ParameterSetName="clientcredentialsSecret")][String]$clientsecret,
+    [Parameter(Mandatory = $true,ParameterSetName="clientcredentialsCertificate")][String]$clientcertificate,
+
+    [Parameter(Mandatory = $true,ParameterSetName="clientcredentialsSecret")]
+    [Parameter(Mandatory = $true,ParameterSetName="clientcredentialsCertificate")]
+    [String]$targetMailbox
 )
 
 function Test-IMAPXOAuth2Connectivity {
@@ -78,7 +88,7 @@ if ( $redirectUri ){
         $authResult = $MsftPowerShellClient | Get-MsalToken -LoginHint $LoginHint -Scopes 'https://outlook.office365.com/.default'
     }
     catch  {
-        Write-Host "Ran into an exception while getting accesstoken" -ForegroundColor Red
+        Write-Host "Ran into an exception while getting accesstoken user grant flow" -ForegroundColor Red
         $_.Exception.Message
         $_.FullyQualifiedErrorId
         break
@@ -92,12 +102,28 @@ if ( $clientsecret ){
         $authResult = $MsftPowerShellClient | Get-MsalToken -Scopes 'https://outlook.office365.com/.default'
     }
     catch  {
-        Write-Host "Ran into an exception while getting accesstoken" -ForegroundColor Red
+        Write-Host "Ran into an exception while getting accesstoken using clientsecret" -ForegroundColor Red
         $_.Exception.Message
         $_.FullyQualifiedErrorId
         break
     }
 }
+
+
+if ( $clientcertificate ){
+    $ClientCert = Get-ChildItem "cert:\currentuser\my\$clientcertificate"
+    $MsftPowerShellClient = New-MsalClientApplication -ClientId $clientID -TenantId $tenantID -ClientCertificate $ClientCert
+    try {
+        $authResult = $MsftPowerShellClient | Get-MsalToken -Scopes 'https://outlook.office365.com/.default'
+    }
+    catch  {
+        Write-Host "Ran into an exception while getting accesstoken using certificate" -ForegroundColor Red
+        $_.Exception.Message
+        $_.FullyQualifiedErrorId
+        break
+    }
+}
+
 
 
 $accessToken = $authResult.AccessToken
