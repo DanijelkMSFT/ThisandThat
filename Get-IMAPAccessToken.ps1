@@ -7,7 +7,7 @@
   Refercing article with more insides 
   https://www.linkedin.com/pulse/start-using-oauth-office-365-popimap-authentication-danijel-klaric
   https://techcommunity.microsoft.com/t5/exchange-team-blog/announcing-oauth-2-0-client-credentials-flow-support-for-pop-and/ba-p/3562963
-
+  https://techcommunity.microsoft.com/t5/exchange-team-blog/notes-from-the-field-using-oauth-for-activesync-and-pop-imap-in/ba-p/3606118
 
   .DESCRIPTION
   The function helps admins to test their IMAP OAuth Azure Application, 
@@ -127,12 +127,13 @@ if ( $clientcertificate ){
 
 
 $accessToken = $authResult.AccessToken
-$username = $authResult.Account.Username
+Write-Verbose "Access Token -- $accessToken"
+$userName = $authResult.Account.Username
 
 # build authentication string with accesstoken and username like documented here
 # https://docs.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth#authenticate-connection-requests
 
-# in the case if client credential usage we need to add the target mailbox like shared mailbox access
+# in the case of client credential usage we need to add the target mailbox like shared mailbox access to the SASL string
 if ( $targetMailbox) { $SharedMailbox = $targetMailbox }
 
 if ( $SharedMailbox ) {
