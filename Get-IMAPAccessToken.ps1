@@ -178,6 +178,7 @@ $Port = '993'
     $SSLstreamReader = new-object System.IO.StreamReader($sslStream)
     $SSLstreamWriter = new-object System.IO.StreamWriter($sslStream)
     $SSLstreamWriter.AutoFlush = $true
+    $SSLstreamWriter.Newline = "`r`n"
     $SSLstreamReader.ReadLine()
 
     Write-Host "Authenticate using XOAuth2." -ForegroundColor DarkGreen
