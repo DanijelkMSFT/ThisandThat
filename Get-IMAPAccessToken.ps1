@@ -1,4 +1,3 @@
-
 <#
   .SYNOPSIS
   Allows IMAP OAuth testing with Office 365.
@@ -88,7 +87,7 @@ if ( $redirectUri ){
         $authResult = $MsftPowerShellClient | Get-MsalToken -LoginHint $LoginHint -Scopes 'https://outlook.office365.com/.default'
     }
     catch  {
-        Write-Host "Ran into an exception while getting accesstoken user grant flow" -ForegroundColor Red
+        Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Ran into an exception while getting accesstoken user grant flow" -ForegroundColor Red
         $_.Exception.Message
         $_.FullyQualifiedErrorId
         break
@@ -102,7 +101,7 @@ if ( $clientsecret ){
         $authResult = $MsftPowerShellClient | Get-MsalToken -Scopes 'https://outlook.office365.com/.default'
     }
     catch  {
-        Write-Host "Ran into an exception while getting accesstoken using clientsecret" -ForegroundColor Red
+        Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Ran into an exception while getting accesstoken using clientsecret" -ForegroundColor Red
         $_.Exception.Message
         $_.FullyQualifiedErrorId
         break
@@ -117,7 +116,7 @@ if ( $clientcertificate ){
         $authResult = $MsftPowerShellClient | Get-MsalToken -Scopes 'https://outlook.office365.com/.default'
     }
     catch  {
-        Write-Host "Ran into an exception while getting accesstoken using certificate" -ForegroundColor Red
+        Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Ran into an exception while getting accesstoken using certificate" -ForegroundColor Red
         $_.Exception.Message
         $_.FullyQualifiedErrorId
         break
@@ -127,7 +126,7 @@ if ( $clientcertificate ){
 
 
 $accessToken = $authResult.AccessToken
-Write-Verbose "Access Token -- $accessToken"
+Write-Verbose "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Access Token -- $accessToken"
 $userName = $authResult.Account.Username
 
 # build authentication string with accesstoken and username like documented here
@@ -138,7 +137,7 @@ if ( $targetMailbox) { $SharedMailbox = $targetMailbox }
 
 if ( $SharedMailbox ) {
     $b="user=" + $SharedMailbox + "$([char]0x01)auth=Bearer " + $accessToken + "$([char]0x01)$([char]0x01)"
-    Write-Host "Accessing Sharedmailbox - $SharedMailbox - with Accesstoken of User $userName." -ForegroundColor DarkGreen
+    Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Accessing Sharedmailbox - $SharedMailbox - with Accesstoken of User $userName." -ForegroundColor DarkGreen
 } else {
         $b="user=" + $userName + "$([char]0x01)auth=Bearer " + $accessToken + "$([char]0x01)$([char]0x01)"
         }
@@ -146,10 +145,10 @@ if ( $SharedMailbox ) {
 $Bytes = [System.Text.Encoding]::ASCII.GetBytes($b)
 $POPIMAPLogin =[Convert]::ToBase64String($Bytes)
 
-Write-Verbose "SASL XOAUTH2 login string $POPIMAPLogin"
+Write-Verbose "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] SASL XOAUTH2 login string $POPIMAPLogin"
 
 # connecting to Office 365 IMAP Service
-Write-Host "Connect to Office 365 IMAP Service." -ForegroundColor DarkGreen
+Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Connect to Office 365 IMAP Service." -ForegroundColor DarkGreen
 $ComputerName = 'Outlook.office365.com'
 $Port = '993'
     try {
@@ -163,13 +162,13 @@ $Port = '993'
             $SSLStream.AuthenticateAsClient($ComputerName,$null,[System.Security.Authentication.SslProtocols]::Tls12,$CheckCertRevocationStatus)
         }
         catch  {
-            Write-Host "Ran into an exception while negotating SSL connection. Exiting." -ForegroundColor Red
+            Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Ran into an exception while negotating SSL connection. Exiting." -ForegroundColor Red
             $_.Exception.Message
             break
         }
     }
     catch  {
-    Write-Host "Ran into an exception while opening TCP connection. Exiting." -ForegroundColor Red
+    Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Ran into an exception while opening TCP connection. Exiting." -ForegroundColor Red
     $_.Exception.Message
     break
     }    
@@ -180,10 +179,10 @@ $Port = '993'
     $SSLstreamWriter.AutoFlush = $true
     $SSLstreamReader.ReadLine()
 
-    Write-Host "Authenticate using XOAuth2." -ForegroundColor DarkGreen
+    Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Authenticate using XOAuth2." -ForegroundColor DarkGreen
     # authenticate and check for results
     $command = "A01 AUTHENTICATE XOAUTH2 {0}" -f $POPIMAPLogin
-    Write-Verbose "Executing command -- $command"
+    Write-Verbose "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Executing command -- $command"
     $SSLstreamWriter.WriteLine($command) 
     #respose might take longer sometimes
     while (!$ResponseStr ) { 
@@ -193,9 +192,9 @@ $Port = '993'
     if ( $ResponseStr -like "*OK AUTHENTICATE completed.") 
     {
         $ResponseStr
-        Write-Host "Getting mailbox folder list as authentication was successfull." -ForegroundColor DarkGreen
+        Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Getting mailbox folder list as authentication was successfull." -ForegroundColor DarkGreen
         $command = 'A01 LIST "" *'
-        Write-Verbose "Executing command -- $command"
+        Write-Verbose "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Executing command -- $command"
         $SSLstreamWriter.WriteLine($command) 
 
         $done = $false
@@ -203,18 +202,18 @@ $Port = '993'
         while (!$done ) {
             $str = $SSLstreamReader.ReadLine()
             if ($str -like "* OK LIST completed.") { $str ; $done = $true } 
-            elseif ($str -like "* BAD User is authenticated but not connected.") { $str; "Causing Error: IMAP protcol access to mailbox is disabled or permission not granted for client credential flow. Please enable IMAP protcol access or grant fullaccess to service principal."; $done = $true} 
+            elseif ($str -like "* BAD User is authenticated but not connected.") { $str; "Causing Error: IMAP protocol access to mailbox is disabled or permission not granted for client credential flow. Please enable IMAP protcol access or grant fullaccess to service principal."; $done = $true}
             else { $str }
         }
 
-        Write-Host "Logout and cleanup sessions." -ForegroundColor DarkGreen
+        Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Logout and cleanup sessions." -ForegroundColor DarkGreen
         $command = 'A01 Logout'
-        Write-Verbose "Executing command -- $command"
+        Write-Verbose "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Executing command -- $command"
         $SSLstreamWriter.WriteLine($command) 
         $SSLstreamReader.ReadLine()
 
     } else {
-        Write-host "ERROR during authentication $ResponseStr" -Foregroundcolor Red
+        Write-host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] ERROR during authentication $ResponseStr" -Foregroundcolor Red
     }
 
     # Session cleanup
@@ -230,7 +229,7 @@ $Port = '993'
 }
 
 #check for needed msal.ps module
-if ( !(Get-Module msal.ps -ListAvailable) ) { Write-Host "MSAL.PS module not installed, please check it out here https://www.powershellgallery.com/packages/MSAL.PS/" -ForegroundColor Red; break}
+if ( !(Get-Module msal.ps -ListAvailable) ) { Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] MSAL.PS module not installed, please check it out here https://www.powershellgallery.com/packages/MSAL.PS/" -ForegroundColor Red; break}
 
 # execute function
 Test-IMAPXOAuth2Connectivity
