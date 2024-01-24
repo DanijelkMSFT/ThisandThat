@@ -16,9 +16,10 @@ function Get-QuarantineEntries {
     return $List
 }
 
+#release Messages in Batches up to 100 - quicker than one by one
 function Release-QuarantineEntries {
     param (
-		[Parameter(Mandatory = $true)][PSCustomObject]$MessageList,
+	[Parameter(Mandatory = $true)][PSCustomObject]$MessageList,
         [Parameter(Mandatory = $true)][int]$batchSize
         )
 
