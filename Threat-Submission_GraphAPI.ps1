@@ -1,8 +1,12 @@
 <#
   .SYNOPSIS
   Basic POC/Example - Threat Submission using Security Graph API with TABL addition
+  
+  Permission needed for submission --> Application -ThreatSubmission.ReadWrite.All
   https://learn.microsoft.com/en-us/graph/api/security-emailthreatsubmission-post-emailthreats?view=graph-rest-beta&tabs=http
-  Permission needed --> Application	ThreatSubmission.ReadWrite.All
+  
+  Permission needed to get the message id as refrence for submission --> Application - Mail.ReadBasic.All OR Mail.Read
+  https://learn.microsoft.com/en-us/graph/api/message-get?view=graph-rest-1.0&tabs=http
 
   Additinal modules needed
   * MSAL.PS Powershell module as prerequisite. https://www.powershellgallery.com/packages/MSAL.PS/4.37.0.0
