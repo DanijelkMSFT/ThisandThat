@@ -3,7 +3,8 @@
   Basic POC/Example - Threat Submission using Security Graph API with TABL addition
   https://learn.microsoft.com/en-us/graph/api/security-emailthreatsubmission-post-emailthreats?view=graph-rest-beta&tabs=http
   Permission needed --> Application	ThreatSubmission.ReadWrite.All
-  
+
+  Additinal modules needed
   * MSAL.PS Powershell module as prerequisite. https://www.powershellgallery.com/packages/MSAL.PS/4.37.0.0
   * JWT https://www.powershellgallery.com/packages/JWTDetails/1.0.2
 
