@@ -36,10 +36,12 @@ param (
 function Query-M365DAdvancedHuntingAPI {
 
   #Import-Module MSAL.PS
+  Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Getting accesstoken using clientsecret." -ForegroundColor DarkGreen
   $authResult = Get-MsalToken -ClientId $clientID -TenantId $tenantID -ClientSecret $clientSecretSecureString -Scopes 'https://api.security.microsoft.com/.default'
   $accessToken = $authResult.AccessToken
+  Write-Verbose "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Access Token -- $accessToken"
 
-  #Write-Host "Accesstoken details" -ForegroundColor Yellow
+  #Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Accesstoken details" -ForegroundColor Yellow
   $accessToken | Get-JWTDetails | Select-Object aud,app_displayname,roles,timeToExpiry
 
   $headers = @{ 
@@ -63,7 +65,9 @@ function Query-M365DAdvancedHuntingAPI {
   }
   $body = $Query | ConvertTo-Json
   $response=$null
+  Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Running advanced hunting query." -ForegroundColor DarkGreen
   $response = Invoke-RestMethod -Uri $URL -Method Post -Body $body -ContentType 'application/json; charset=utf-8' -Headers $headers
+  Write-Host ("[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Query completed, {0} result(s) returned." -f $response.Results.count) -ForegroundColor DarkGreen
   $response.Results[0] | Out-String
 }
 

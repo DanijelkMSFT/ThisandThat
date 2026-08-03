@@ -23,9 +23,11 @@ $clientID = ''
 $clientSecret = ConvertTo-SecureString '' -AsPlainText -Force
 
 # Using MSAL.PS powershell library to get the access token
+Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Getting accesstoken using clientsecret." -ForegroundColor DarkGreen
 $authResult = Get-MsalToken -ClientId $clientID -TenantId $tenantID -ClientSecret $clientSecret -ForceRefresh
 $accessToken = $authResult.AccessToken
 # Using jwtdetails module to get the details of the access token
+Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Accesstoken details" -ForegroundColor Yellow
 $accessToken | Get-JWTDetails | select-object aud,app_displayname,roles
 $accessTokenSecureString = ConvertTo-SecureString $accessToken -AsPlainText -Force
 
@@ -34,7 +36,9 @@ $headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + 
 $Mailbox = ""
 $MessageID = "''"
 $MessageIDQueryURL = "https://graph.microsoft.com/v1.0/users/{0}/messages?`$filter=(internetMessageId eq {1})" -f $Mailbox,$MessageID
+Write-Host ("[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Getting message id for internetMessageId {0} in mailbox {1}." -f $MessageID,$Mailbox) -ForegroundColor DarkGreen
 $id = (Invoke-RestMethod -Headers $headers -Uri $MessageIDQueryURL -Method Get).value.id
+Write-Host ("[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Message id resolved to {0}." -f $id) -ForegroundColor DarkGreen
 
 
 $GraphUrl="https://graph.microsoft.com/beta/security/threatSubmission/emailThreats"
@@ -67,6 +71,13 @@ if ( $allowAllow ) {
   } | ConvertTo-Json
 }
 
+Write-Host ("[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Submitting email threat with category {0} for mailbox {1}." -f $submissionCategory,$Mailbox) -ForegroundColor DarkGreen
+$err=$null
 try{ $Submissionresult = Invoke-WebRequest -Uri $GraphURL -Headers $headers -Body $bodyJSON -Method POST -ContentType 'application/json' -ErrorVariable RespErr } catch {$err=$_.Exception}
+if ( $err ) {
+  Write-Host "[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Ran into an exception while submitting the email threat." -ForegroundColor Red
+} else {
+  Write-Host ("[$((Get-Date).ToString("yyyy/MM/dd HH:mm:ss.fff"))] Submission completed with status code {0}." -f $Submissionresult.StatusCode) -ForegroundColor DarkGreen
+}
 $err | Get-Member -MemberType Property
 
